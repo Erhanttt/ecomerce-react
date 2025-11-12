@@ -11,30 +11,42 @@ export default function Register() {
   const [error, setError] = useState("");
 
   const handleRegister = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (password !== confirm) {
-      setError("Fjalëkalimet nuk përputhen");
-      return;
+  if (password !== confirm) {
+    setError("⚠️ Fjalëkalimet nuk përputhen");
+    return;
+  }
+
+  try {
+    const res = await api.post("/register", {
+      name,
+      email,
+      password,
+      password_confirmation: confirm,
+    });
+
+    // ✅ nëse gjithçka shkon mirë
+    localStorage.setItem("token", res.data.token);
+    navigate("/dashboard");
+  } catch (error) {
+    console.error("🚨 Gabim gjatë regjistrimit:", error);
+
+    // ✅ kontrollo nëse Laravel kthen diçka
+    if (error.response) {
+      console.log("Përgjigjja nga Laravel:", error.response.data);
+
+      // nëse Laravel jep mesazh specifik
+      setError(error.response.data.message || "Gabim nga serveri (500)");
+    } else if (error.request) {
+      setError("Nuk ka lidhje me serverin. Kontrollo internetin ose API URL-në.");
+    } else {
+      setError("Gabim i panjohur: " + error.message);
     }
+  }
+};
 
-    try {
-      const res = await api.post("/register", {
-        name,
-        email,
-        password,
-        password_confirmation: confirm,
-      });
-
-      // ✅ tani ruaj tokenin nga përgjigja reale
-      localStorage.setItem("token", res.data.token);
-      navigate("/dashboard"); // pas regjistrimit dergo te dashboard
-    } catch (err) {
-      console.error("Gabim gjatë regjistrimit:", err.response?.data);
-      setError("Email ekziston ose të dhënat janë të pasakta");
-    }
-  };
 
 
   return (
